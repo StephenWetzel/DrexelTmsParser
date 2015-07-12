@@ -28,6 +28,20 @@ my @letters = ('a', 'e', 'i', 'o', 'u', 'y');
 my @allUrls;
 
 
+
+#get the JSESSIONID:
+#X-Powered-By: Servlet 2.5; JBoss-5.0/JBossWeb-2.1
+#Set-Cookie: JSESSIONID=4B8CFED15E5B0566D67F70FFB8F570D0; Path=/webtms_du; Secure
+#Content-Type: text/html;charset=UTF-8
+
+
+
+my $temp = `curl -s -D -  --data 'formids=term%2CcourseName%2CcrseNumb%2Ccrn&component=searchForm&page=Home&service=direct&submitmode=submit&submitname=&term=1&courseName=test&crseNumb=&crn=' -X POST https://duapp2.drexel.edu/webtms_du/app -o /dev/null`; #Note the lack of &session=T, that's important
+
+$temp =~ m/Set-Cookie: JSESSIONID=([A-F0-9]{32})/ or die "Can't find JSESSIONID";
+$sessionId = $1; #found the current session ID
+
+
 foreach my $letter (@letters)
 {
 	print "\n\ncurl --header 'cookie: JSESSIONID=$sessionId;' --data '$data$letter' -X POST $url 2>/dev/null";
