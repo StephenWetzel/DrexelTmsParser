@@ -7,11 +7,20 @@
 use strict;
 use warnings;
 #use List::MoreUtils qw(any uniq);
-
+use DBI;
 
 #use autodie; #die on file not found
 $|++; #autoflush disk buffer
 
+my $dbFile = 'tms.db';
+my $dsn      = "dbi:SQLite:dbname=$dbFile";
+my $user     = "";
+my $password = "";
+my $dbh = DBI->connect($dsn, $user, $password, {
+	PrintError       => 0,
+	RaiseError       => 1,
+	AutoCommit       => 1,
+});
 my $inFileName = 'crns.csv';
 my $outFileName = 'classes.tsv';
 my $baseUrl = 'https://duapp2.drexel.edu';
@@ -32,6 +41,9 @@ my @fileArray = <$ifile>;
 close $ifile;
 
 open my $ofile, '>', $outFileName;
+
+
+
 
 foreach my $thisLine (@fileArray)
 {
@@ -65,10 +77,14 @@ foreach my $thisLine (@fileArray)
 	print "\n\n$count $subject \t$cNum \t$credits \t$title \t$campus \t$prof \t$type \t$time \t$day\n";
 	
 	print $ofile "\n$subject \t$cNum \t$crn \t$credits \t$title \t$campus \t$prof \t$type \t$time \t$day \t$preq \t$desc";
+	
+	$dbh->do('INSERT INTO classes (subject_code, course_no, crn, credits, course_title, campus, instructor, instr_type, time, day, pre_reqs, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', undef, $subject, $cNum, int($crn), $credits, $title, $campus, $prof, $type, $time, $day, $preq, $desc);
+	
 	$count++;
 	#sleep(1);
 	
 }
 
+$dbh->disconnect;
 
 print "\nDone\n\n";
