@@ -41,6 +41,8 @@ my $dbh = DBI->connect($dsn, $user, $password, {
 
 my $sql = <<'END_SQL';
 CREATE TABLE classes (
+ year INTEGER,
+ term TEXT,
  subject_code TEXT,
  course_no TEXT,
  instr_type TEXT,
@@ -58,7 +60,8 @@ CREATE TABLE classes (
  building TEXT,
  room TEXT,
  description TEXT,
- pre_reqs TEXT
+ pre_reqs TEXT,
+ co_reqs TEXT
 )
 END_SQL
  
