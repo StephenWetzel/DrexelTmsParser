@@ -2,7 +2,7 @@
 # by Stephen Wetzel May 03 2015
 #Requires cURL is installed
 
-#Use getSchedule.pl first to get a list of URLs of detail pages for each course.
+#Use getListOfClasses.pl first to get a list of URLs of detail pages for each course.
 
 use strict;
 use warnings;
@@ -22,8 +22,7 @@ my $dbh = DBI->connect($dsn, $user, $password, {
 	AutoCommit       => 1,
 });
 my $inFileName = 'crns.csv';
-my $outFileName = 'classes.tsv';
-my $baseUrl = 'https://duapp2.drexel.edu';
+my $baseUrl = 'https://duapp2.drexel.edu/webtms_du/app?component=courseDetails&page=CourseSearchResult&service=direct&session=T';
 my $sessionId = '2357A293F0608215F6D989A989D17BE1';
 my $body=''; #response body
 my $count = 0;
@@ -36,20 +35,14 @@ $temp =~ m/Set-Cookie: JSESSIONID=([A-F0-9]{32})/ or die "Can't find JSESSIONID"
 $sessionId = $1; #found the current session ID
 
 
+#get the list of urls from the DB:
+my $sth = $dbh->prepare("SELECT url FROM class_urls WHERE term = 'Summer'");
+$sth->execute();
 
-open my $ifile, '<', $inFileName;
-my @fileArray = <$ifile>;
-close $ifile;
-
-open my $ofile, '>', $outFileName;
-
-
-
-
-foreach my $thisLine (@fileArray)
+while (my $thisUrl = $sth->fetchrow_array())
 {
-	chomp($thisLine);
-	my $curlRequest = "curl --header 'cookie: JSESSIONID=$sessionId;' -X GET \"$baseUrl$thisLine\" 2>/dev/null";
+	chomp($thisUrl);
+	my $curlRequest = "curl --header 'cookie: JSESSIONID=$sessionId;' -X GET \"$baseUrl$thisUrl\" 2>/dev/null";
 	
 	#print "\n$curlRequest";
 	$body = `$curlRequest`; #get response body from curl
@@ -85,9 +78,8 @@ foreach my $thisLine (@fileArray)
 	if ($term ne 'Fall') { $year++; } #every term but fall takes place in the second year
 	$year += 2000;
 	
-	print "\n$count $subject \t$cNum \t$credits \t$title \t$campus \t$prof \t$type \t$time \t$day\n";
+	print "$count $subject \t$cNum \t$credits \t$title \t$campus \t$prof \t$type \t$time \t$day\n";
 	
-	print $ofile "\n$subject \t$cNum \t$crn \t$credits \t$title \t$campus \t$prof \t$type \t$time \t$day \t$preq \t$desc";
 	if (int($crn) > 0) {
 		$dbh->do('INSERT OR REPLACE INTO classes (year, term, subject_code, course_no, crn, instr_method, section, credits, course_title, campus, instructor, instr_type, time, day, pre_reqs, co_reqs, description, max_enroll, enroll, building) 
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', undef, 
@@ -100,5 +92,4 @@ foreach my $thisLine (@fileArray)
 }
 
 $dbh->disconnect;
-
 print "\nDone\n\n";

@@ -61,27 +61,24 @@ CREATE TABLE classes (
  room TEXT,
  description TEXT,
  pre_reqs TEXT,
- co_reqs TEXT
+ co_reqs TEXT,
+ timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 )
 END_SQL
- 
 $dbh->do($sql);
 
+$sql = <<'END_SQL';
+CREATE TABLE class_urls (
+ year INTEGER,
+ term TEXT,
+ crn INTEGER PRIMARY KEY,
+ url TEXT,
+ timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+)
+END_SQL
+$dbh->do($sql);
 
-
-
-
-
-
-
-
-
-
- 
 $dbh->disconnect;
-
-
-
 
 
 print "\nDone\n\n";
