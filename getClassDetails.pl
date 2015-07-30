@@ -27,16 +27,15 @@ my $sessionId = '2357A293F0608215F6D989A989D17BE1';
 my $body=''; #response body
 my $count = 0;
 my $year = 2015; #these will need to be set programtically at some point
-my $term = 'Fall';
+my $term = 'Winter';
 
 my $temp = `curl -s -D -  --data 'formids=term%2CcourseName%2CcrseNumb%2Ccrn&component=searchForm&page=Home&service=direct&submitmode=submit&submitname=&term=1&courseName=test&crseNumb=&crn=' -X POST https://duapp2.drexel.edu/webtms_du/app -o /dev/null`; #Note the lack of &session=T, that's important
 
 $temp =~ m/Set-Cookie: JSESSIONID=([A-F0-9]{32})/ or die "Can't find JSESSIONID";
 $sessionId = $1; #found the current session ID
 
-
 #get the list of urls from the DB:
-my $sth = $dbh->prepare("SELECT url FROM class_urls WHERE term = 'Summer'");
+my $sth = $dbh->prepare("SELECT url FROM class_urls WHERE term = '$term' AND year = '$year'");
 $sth->execute();
 
 while (my $thisUrl = $sth->fetchrow_array())
@@ -77,6 +76,11 @@ while (my $thisUrl = $sth->fetchrow_array())
 	$body =~ m/<div align="left">Schedule for (\w+) Quarter (\d\d)-\d\d<\/div>/ and $term = $1 and $year = $2; 
 	if ($term ne 'Fall') { $year++; } #every term but fall takes place in the second year
 	$year += 2000;
+	
+	$preq =~ s/<[\/a-zA-Z]+>//g; #remove <span> tags
+	$preq =~ s/\s+/ /g; #remove duplicate whitespace
+	$coreq =~ s/<[\/a-zA-Z]+>//g; #remove <span> tags
+	$coreq =~ s/\s+/ /g; #remove duplicate whitespace
 	
 	print "$count $subject \t$cNum \t$credits \t$title \t$campus \t$prof \t$type \t$time \t$day\n";
 	

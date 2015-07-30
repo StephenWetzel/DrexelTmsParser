@@ -34,9 +34,7 @@ my $data='formids=term%2CcourseName%2CcrseNumb%2Ccrn&component=searchForm&page=H
 my $year = 2014; #these will need to be set programtically at some point
 my $term = 'Fall';
 
-my %maxEnrolls;
-my %enrolls;
-my %urls;
+
 
 #It seems on the TMS search page, the terms 1-4 are always fall through summer of this academic year.
 #Next year is terms 5-8, but don't seem to work
@@ -61,15 +59,17 @@ my $temp = `curl -s -D -  --data 'formids=term%2CcourseName%2CcrseNumb%2Ccrn&com
 $temp =~ m/Set-Cookie: JSESSIONID=([A-F0-9]{32})/ or die "Can't find JSESSIONID";
 $sessionId = $1; #found the current session ID
 
-for (my $termNum = 4; $termNum <= 4; $termNum++)
+for (my $termNum = 1; $termNum <= 4; $termNum++)
 {
+	my %maxEnrolls;
+	my %enrolls;
+	my %urls;
 	my $timestamp = getTimeStamp();
 	if ($termNum == 2) { $year++; } #term 2 is winter
 	print "\n\nDownloading data for $termNames[$termNum] $year";
 	my @allUrls;
 	foreach my $letter (@letters)
 	{
-		
 		print "\n\ncurl --header 'cookie: JSESSIONID=$sessionId;' --data '$data$letter&term=$termNum' -X POST $url 2>/dev/null";
 		$body = `curl --header 'cookie: JSESSIONID=$sessionId;' --data '$data$letter&term=$termNum' -X POST $url 2>/dev/null`; #get response body from curl
 		print "\nLetter: $letter";
