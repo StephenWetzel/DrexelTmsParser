@@ -1,32 +1,11 @@
 #!/usr/bin/perl
 # by Stephen Wetzel May 03 2015
 
+#create empty database tables
 
 use strict;
 use warnings;
 use DBI;
-
-
-
-
-#subject_code text
-#course_no text
-#instr_type text
-#instr_method text
-#section text
-#crn integer primary key
-#course_title text
-#day text
-#time text
-#instructor text
-#campus text
-#max_enroll integer
-#enroll integer
-#building text
-#room text
-#description text
-#pre_reqs text
-
 
 my $dbfile = 'tms.db';
 my $dsn      = "dbi:SQLite:dbname=$dbfile";
@@ -78,7 +57,16 @@ CREATE TABLE class_urls (
 END_SQL
 $dbh->do($sql);
 
-$dbh->disconnect;
+$sql = <<'END_SQL';
+CREATE TABLE subject_urls (
+ year INTEGER,
+ term TEXT,
+ url TEXT PRIMARY KEY,
+ timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+)
+END_SQL
+$dbh->do($sql);
 
+$dbh->disconnect;
 
 print "\nDone\n\n";

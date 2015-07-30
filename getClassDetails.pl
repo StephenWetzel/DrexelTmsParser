@@ -3,10 +3,11 @@
 #Requires cURL is installed
 
 #Use getListOfClasses.pl first to get a list of URLs of detail pages for each course.
+#This script will download class details from the urls listed in the class_urls table.
+#It will only update the classes for the given term and year (currently set below), and will take quite a while to run.  The enroll counts can be gotten from getListOfClasses.pl, so this script should only be needed daily or even less.
 
 use strict;
 use warnings;
-#use List::MoreUtils qw(any uniq);
 use DBI;
 
 #use autodie; #die on file not found
@@ -21,16 +22,14 @@ my $dbh = DBI->connect($dsn, $user, $password, {
 	RaiseError       => 1,
 	AutoCommit       => 1,
 });
-my $inFileName = 'crns.csv';
 my $baseUrl = 'https://duapp2.drexel.edu/webtms_du/app?component=courseDetails&page=CourseSearchResult&service=direct&session=T';
 my $sessionId = '2357A293F0608215F6D989A989D17BE1';
 my $body=''; #response body
 my $count = 0;
 my $year = 2015; #these will need to be set programtically at some point
-my $term = 'Winter';
+my $term = 'Fall';
 
 my $temp = `curl -s -D -  --data 'formids=term%2CcourseName%2CcrseNumb%2Ccrn&component=searchForm&page=Home&service=direct&submitmode=submit&submitname=&term=1&courseName=test&crseNumb=&crn=' -X POST https://duapp2.drexel.edu/webtms_du/app -o /dev/null`; #Note the lack of &session=T, that's important
-
 $temp =~ m/Set-Cookie: JSESSIONID=([A-F0-9]{32})/ or die "Can't find JSESSIONID";
 $sessionId = $1; #found the current session ID
 
@@ -39,7 +38,7 @@ my $sth = $dbh->prepare("SELECT url FROM class_urls WHERE term = '$term' AND yea
 $sth->execute();
 
 while (my $thisUrl = $sth->fetchrow_array())
-{
+{#go through each class detail url that we found in the db
 	chomp($thisUrl);
 	my $curlRequest = "curl --header 'cookie: JSESSIONID=$sessionId;' -X GET \"$baseUrl$thisUrl\" 2>/dev/null";
 	
@@ -82,7 +81,7 @@ while (my $thisUrl = $sth->fetchrow_array())
 	$coreq =~ s/<[\/a-zA-Z]+>//g; #remove <span> tags
 	$coreq =~ s/\s+/ /g; #remove duplicate whitespace
 	
-	print "$count $subject \t$cNum \t$credits \t$title \t$campus \t$prof \t$type \t$time \t$day\n";
+	print "$count \t$subject \t$cNum \t$crn \t$title\n";
 	
 	if (int($crn) > 0) {
 		$dbh->do('INSERT OR REPLACE INTO classes (year, term, subject_code, course_no, crn, instr_method, section, credits, course_title, campus, instructor, instr_type, time, day, pre_reqs, co_reqs, description, max_enroll, enroll, building) 
@@ -92,7 +91,6 @@ while (my $thisUrl = $sth->fetchrow_array())
 	
 	$count++;
 	#sleep(1);
-	
 }
 
 $dbh->disconnect;
