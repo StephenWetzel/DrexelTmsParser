@@ -7,8 +7,9 @@ use strict;
 use warnings;
 use DBI;
 
-my $dbfile = 'tms.db';
-my $dsn      = "dbi:SQLite:dbname=$dbfile";
+# This script works directly with our SQLite DB  
+my $dbFile = '../database.sqlite';
+my $dsn      = "dbi:SQLite:dbname=$dbFile";
 my $user     = "";
 my $password = "";
 my $dbh = DBI->connect($dsn, $user, $password, {
