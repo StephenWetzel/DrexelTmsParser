@@ -21,14 +21,14 @@ my $dbh = DBI->connect($dsn, $user, $password, {
 
 my $sql = <<'END_SQL';
 CREATE TABLE classes (
- year INTEGER,
+ year INTEGER NOT NULL,
  term TEXT,
  subject_code TEXT,
  course_no TEXT,
  instr_type TEXT,
  instr_method TEXT,
  section TEXT,
- crn INTEGER PRIMARY KEY,
+ crn INTEGER NOT NULL,
  course_title TEXT,
  credits REAL,
  day TEXT,
@@ -42,18 +42,20 @@ CREATE TABLE classes (
  description TEXT,
  pre_reqs TEXT,
  co_reqs TEXT,
- timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+ timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+ PRIMARY KEY (year, crn)
 )
 END_SQL
 $dbh->do($sql);
 
 $sql = <<'END_SQL';
 CREATE TABLE class_urls (
- year INTEGER,
+ year INTEGER NOT NULL,
  term TEXT,
- crn INTEGER PRIMARY KEY,
+ crn INTEGER NOT NULL,
  url TEXT,
- timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+ timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+ PRIMARY KEY (year, crn)
 )
 END_SQL
 $dbh->do($sql);

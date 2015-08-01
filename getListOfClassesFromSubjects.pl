@@ -73,6 +73,18 @@ while (my $thisUrl = $sth->fetchrow_array())
 		$enrolls{$crn} = $enroll;
 		$newUrlCount++;
 	}
+	while ($body =~ m/.+<p title="FULL">.+&amp;page=CourseList&amp;service=direct&amp;session=T(&amp;sp=.+;sp=\d+)">(\d+)<\/a>/g)
+	{#a second regex to check for full classes
+		my $crn = int($2);
+		my $maxEnroll = 0;
+		my $enroll = "CLOSED";
+		my $detailUrl = decode_entities($1);
+		$detailUrl = decode_entities($detailUrl);
+		$urls{$crn} = $detailUrl;
+		$maxEnrolls{$crn} = $maxEnroll;
+		$enrolls{$crn} = $enroll;
+		$newUrlCount++;
+	}
 	
 	print "\nURLs Found: ", $newUrlCount;
 }
@@ -85,10 +97,19 @@ foreach my $crn (keys %urls)
 	$dbh->do('INSERT OR REPLACE INTO class_urls (year, term, crn, url, timestamp) 
 	VALUES (?, ?, ?, ?, ?)', undef, $year, $term, $crn, $thisUrl, $timestamp);
 	
-	#update the enroll counts in the main table
-	$dbh->do('UPDATE classes SET 
-	max_enroll = ?, enroll = ?
-	WHERE crn = ?', undef, $thisMax, $thisEnroll, $crn);
+	if ($thisEnroll eq 'CLOSED')
+	{#this section is full
+		$dbh->do('UPDATE classes SET 
+		enroll = ?
+		WHERE crn = ? AND year = ?', undef, $thisEnroll, $crn, $year);
+	}
+	else
+	{#this section is not full
+		#update the enroll counts in the main table
+		$dbh->do('UPDATE classes SET 
+		max_enroll = ?, enroll = ?
+		WHERE crn = ? AND year = ?', undef, $thisMax, $thisEnroll, $crn, $year);
+	}
 }
 
 
